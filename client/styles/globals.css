@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+select {
+  width: auto;
+  height: 47px;
+  position: absolute;
+}
+
+.graphWrapper {
+  position: absolute;
+  top: 30%;
+  left: 5%;
+}
+
+input[type=text] {
+    padding: 0;
+    height: 47px;
+    position: relative;
+    left: 0;
+    outline: none;
+    border: 1px solid #cdcdcd;
+    border-color: rgba(0, 0, 0, .15);
+    background-color: white;
+    font-size: 16px;
+  }
+
+
+/* CSS */
+button {
+  background-color: #fff;
+  border: 2px solid #000;
+  box-sizing: border-box;
+  color: #000;
+  cursor: pointer;
+
+  fill: #000;
+  font-family: Inter,sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  height: 48px;
+  justify-content: center;
+  letter-spacing: -.8px;
+  line-height: 24px;
+  min-width: 140px;
+  outline: 0;
+  padding: 0 17px;
+  text-align: center;
+  text-decoration: none;
+  transition: all .3s;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+button:focus {
+  color: #171e29;
+}
+
+button:hover {
+  border-color: #06f;
+  color: #06f;
+  fill: #06f;
+}
+
+button:active {
+  border-color: #06f;
+  color: #06f;
+  fill: #06f;
+}
+
+@media (min-width: 768px) {
+  .button {
+    min-width: 170px;
+  }
+}
+
+
+
+
