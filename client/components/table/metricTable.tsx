@@ -5,6 +5,13 @@ function MetricTable(props: any) {
 
   return (
     <>
+      <table>
+      <thead>
+      <tr>
+        <th>date</th>
+        <th>{props.metric}</th>
+      </tr>
+      </thead>        
       <tbody>
       {data.map((x: any) => (
           <tr>
@@ -13,6 +20,7 @@ function MetricTable(props: any) {
           </tr>
       ))}
       </tbody>
+      </table>
       <SaveTable metric={props.metric} savedata={data}/>
     </>    
     )
