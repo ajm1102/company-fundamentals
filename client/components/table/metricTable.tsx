@@ -5,21 +5,21 @@ function MetricTable(props: any) {
 
   return (
     <>
-      <table>
-      <thead>
-      <tr>
-        <th>date</th>
-        <th>{props.metric}</th>
-      </tr>
-      </thead>        
-      <tbody>
-      {data.map((x: any) => (
-          <tr>
-            <td>{x.date}</td>
-            <td>{x[props.metric]}</td>
-          </tr>
-      ))}
-      </tbody>
+      <table id='metricTable'>
+        <thead>
+        <tr>
+          <th>date</th>
+          <th>{props.metric}</th>
+        </tr>
+        </thead>        
+        <tbody>
+        {data.map((x: any) => (
+            <tr>
+              <td>{x.date}</td>
+              <td>{x[props.metric]}</td>
+            </tr>
+        ))}
+        </tbody>
       </table>
       <SaveTable metric={props.metric} savedata={data}/>
     </>    

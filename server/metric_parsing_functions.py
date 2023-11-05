@@ -41,6 +41,9 @@ def parse_10K(company_submissions, file_name):
     income_df = income_extraction_10K(val, cur_date)
     balance_df = balance_extraction_10K(val, cur_date)
 
+    income_df = income_df.drop('index', axis=1)
+    balance_df = balance_df.drop('index', axis=1)
+
     return income_df, balance_df
 
 def parse_10K_sql(company_submissions, file_name):
@@ -57,6 +60,9 @@ def parse_10K_sql(company_submissions, file_name):
     x.columns = column_names
     income_df = income_extraction_10K(x, cur_date)
     balance_df = balance_extraction_10K(x, cur_date)
+
+    income_df = income_df.drop('index', axis=1)
+    balance_df = balance_df.drop('index', axis=1)
 
     return income_df, balance_df
 

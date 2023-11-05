@@ -2,7 +2,7 @@ from flask import Flask, jsonify, request, session
 from flask_cors import CORS, cross_origin
 from flask_session import Session
 
-from main import return_metrics_pandas
+from main import return_metrics
 import json
 import pandas as pd
 from flask_socketio import SocketIO
@@ -28,21 +28,25 @@ def return_stock_metrics():
     args = request.args
     stock_ticker = args['stockTicker'] 
 
-    metrics, balance, income = return_metrics_pandas(stock_ticker)
+    metrics, balance, income = return_metrics(stock_ticker)
+    metrics = sorted(metrics, reverse=False)
+
     session['balance'] = balance.to_dict()
     session['income'] = income.to_dict()
-    metrics = sorted(metrics, reverse=False)
     return json.dumps(metrics)
 
 @app.route('/metricHistory', methods=['GET'])
 @cross_origin(supports_credentials=True)
 def metric_history():
+    # extract 
     args = request.args
-
     metric = args['metric']
+
+    # extract dataframes from session
     income_statement = pd.DataFrame(session['income'])
     balance_statement = pd.DataFrame(session['balance'])
-
+    
+    
     if metric in income_statement.index:
         output = income_statement.loc[metric]
     elif metric in balance_statement.index:
@@ -53,7 +57,6 @@ def metric_history():
     output.index.name = "date"
     output = output.fillna('null')
     output = output.reset_index().to_dict(orient='records')
-    print(json.dumps(output))
     return json.dumps(output)
 
 @app.route('/download_update_dataset', methods=['GET'])
@@ -61,6 +64,7 @@ def metric_history():
 @cross_origin(supports_credentials=True)
 def download_update_dataset():
     from downloader_socket import download_update_clean_files
+
     args = request.args
     metric = args['update']
 
@@ -69,6 +73,7 @@ def download_update_dataset():
         download_update_clean_files(socketio)
         updated['updated'] = True
     return json.dumps(updated)
+
 
 @app.route('/share_price_hist', methods=['GET'])
 @cross_origin(supports_credentials=True)
@@ -90,9 +95,6 @@ def get_share_price_history():
         comb.append({"date": date, "price": price})
 
     return json.dumps(comb)
-
-
-
 
 if __name__ == "__main__":
     socketio.run(app, debug=True, port="8080")

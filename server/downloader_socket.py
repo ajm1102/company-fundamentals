@@ -9,16 +9,29 @@ import time
 
 
 """
+class props:
+    status = False
+
+def ack(value):
+    if value == 'ok':
+        props.status = False
+        return 
+    elif value == 'stop':
+        props.status = True
+        return 
 
 def download_update_clean_files(socketio):
-
+    props.status = False
     error_filenames = download_update(socketio)
-    cleaner(socketio, error_filenames)
 
-    return
+    if props.status == True:
+        return
+    
+    cleaner(socketio, error_filenames)
+    return 
 
 def download_update(socketio):
-    emit_wait_time = 0.01
+    emit_wait_time = 1
 
     # dates for each release quarterly
     files = os.listdir('./data_code/')
@@ -32,8 +45,11 @@ def download_update(socketio):
         
         file_name = f'{yr}q{qr}_notes' # create file to store downloaded data
 
-        socketio.emit('message_from_server', {"data": f"Downloadling{file_name}"})
-        
+        if props.status == True:
+            return error_filenames
+
+        socketio.emit('message_from_server', {"data": f"Downloadling{file_name}"}, callback=ack)
+
         if file_name in files:
             time.sleep(emit_wait_time)
             continue
@@ -55,8 +71,11 @@ def download_update(socketio):
         
         file_name = f'{yr}_{month}_notes'
 
-        socketio.emit('message_from_server', {"data": f"Downloadling{file_name}"})
+        if props.status == False:
+            return error_filenames
 
+        socketio.emit('message_from_server', {"data": f"Downloadling{file_name}"}, callback=ack)     
+        
         if file_name in files:
             time.sleep(emit_wait_time)
             continue    
@@ -69,6 +88,7 @@ def download_update(socketio):
         except:
             error_filenames.append(file_name)
     return error_filenames
+
 
 def cleaner(socketio, error_filenames):
     from sqlalchemy import create_engine
@@ -93,7 +113,11 @@ def cleaner(socketio, error_filenames):
     # open each num tsv fiie, the file stores each xbrl value for the sec document
     for file_name in files:
         # send update on editing to websocket
-        socketio.emit('message_from_server', {"data": f"Editing {file_name}"})
+
+        if props.status == False:
+            return 
+
+        socketio.emit('message_from_server', {"data": f"Editing {file_name}"}, callback=ack)    
 
         # check if files has already been create and skip if so
         data_files = os.listdir(f"./data_code/{file_name}")
@@ -114,5 +138,5 @@ def cleaner(socketio, error_filenames):
         # add tables to sql server with 
         reduced_df_num.to_sql(file_name, engine)
 
-    return
+    return 
 

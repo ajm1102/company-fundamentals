@@ -1,0 +1,45 @@
+#enterListContainer {
+    display: grid;
+    grid-template-columns: 230px 1fr;
+    grid-template-rows: 1fr 1fr ;
+    position: absolute;
+    grid-template-areas:
+    "enterTicker tickerTextBox enterButton"
+    "listResult listResult listResult";
+}
+
+.listResult { grid-area: listResult; }
+.enterTicker { grid-area: enterTicker; align-self: center;}
+.tickerTextBox { grid-area: tickerTextBox; }
+.enterButton { grid-area: enterButton; }
+
+.metricGraph { grid-area: metricGraph; }
+.sharePriceGraph { grid-area: sharePriceGraph; }
+.metricTable { 
+    grid-area: metricTable; 
+    grid-row: 1 / 2;
+}
+
+#downloadButton { 
+    grid-area: downloadButton;
+    width: 50%;
+
+}
+
+tbody {
+    height: 200px;
+    overflow-y: scroll;
+  }
+
+#tableGraphOutputContainer {
+    display: grid;
+    grid-template-columns: 600px 1fr 1fr;
+    grid-template-rows: 100px minmax(10px, 100px) ;
+    row-gap: 300px;
+    column-gap: 50px;
+    grid-template-areas: 
+    "metricGraph metricTable downloadButton" 
+    "sharePriceGraph metricTable downloadButton" ;
+    position: absolute;
+    top: 10%;
+}

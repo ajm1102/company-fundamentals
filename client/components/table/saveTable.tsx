@@ -4,9 +4,7 @@ import { CSVLink, CSVDownload } from "react-csv";
 function saveTable(props: any) {
     
     const data = props.savedata as any
-
     const arrayLength = data.length;
-
     const headers = ['dates', props.metric]
     const zip = (a:any, b:any) => a.map((k:any, i:any) => `${k}, ${b[i]||''}`)
     const zipLonger = (a:any, b:any) => a.length > b.length ? zip(a, b) : zip(b, a)
@@ -24,7 +22,7 @@ function saveTable(props: any) {
 
   return (
     <>
-    <button>
+    <button id='downloadButton'>
         <CSVLink className="button" data={shit} separator={","}>
             Download me
         </CSVLink>

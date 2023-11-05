@@ -7,7 +7,6 @@ function StockDataFetch() {
     const [stockTicker, setStockTicker] = useState('')
     const [metricList, setMetricList] = useState([])
     const [renderList, setRenderList] = useState(false)
-    const [renderGraph, setRenderGraph] = useState(false)
     const [metric, setMetric] = useState('')
     const [results, setResults] = useState([])
     const [sharePriceResults, setSharePriceResults] = useState([])
@@ -58,7 +57,6 @@ function StockDataFetch() {
         
         if (res.ok) {
             setResults(JSON.parse(message_received));
-            setRenderGraph(true)
         }
     }
 
@@ -71,7 +69,6 @@ function StockDataFetch() {
         
         if (res.ok) {
             setResults(JSON.parse(message_received));
-            setRenderGraph(true)
         }
     }
 
@@ -79,18 +76,22 @@ function StockDataFetch() {
 
   return (
     <>
-        <p>Please enter stock ticker below:</p>
-        <input type='text' onChange={handleChange}></input>
-        <button role="button" onClick={getMetrics}>Enter</button>
-       
-        {renderList && <select onChange={getDataForMetric}>
-            {metricList.map((listMetric)=> {
-                return <option>{listMetric}</option>
-            })}
-        </select>}
-        {renderList && <DataLineChart metric={metric} data={results} />}
-        {renderList && <SharePriceLineChart data={sharePriceResults} />} 
-        {renderList && <MetricTable metric={metric} data={results}/>}
+        <div id='enterListContainer'>
+            <p className='enterTicker'>Please enter stock ticker below:</p>
+            <input className='tickerTextBox' type='text' onChange={handleChange}></input>
+            <button className='enterButton' role="button" onClick={getMetrics}>Enter</button>
+        
+            {renderList && <select className='listResult' onChange={getDataForMetric}>
+                {metricList.map((listMetric)=> {
+                    return <option>{listMetric}</option>
+                })}
+            </select>}
+            </div>
+        <div id='tableGraphOutputContainer'>
+            {renderList && <DataLineChart className='metricGraph' metric={metric} data={results} />}
+            {renderList && <MetricTable className='metricTable' metric={metric} data={results}/>}
+            {renderList && <SharePriceLineChart className='sharePriceGraph' data={sharePriceResults} />} 
+        </div>
     </>
   )
 }
