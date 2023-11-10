@@ -137,6 +137,7 @@ def cleaner(socketio, error_filenames):
         
         # add tables to sql server with 
         reduced_df_num.to_sql(file_name, engine)
-
+    # close engine 
+    engine.dispose()
     return 
 
