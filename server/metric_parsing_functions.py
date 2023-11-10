@@ -3,6 +3,7 @@ import sqlite3
 
 # get 10Q dataframes 
 def parse_10Q_sql(company_submissions, file_name):
+    
     cur_date = int(company_submissions['period'].values[0])
     conn = sqlite3.connect('mydb.db')
     cur = conn.cursor()
@@ -76,9 +77,6 @@ def balance_extraction_10K(val, cur_date):
     balance_dataframe = balance_dataframe.set_index(balance_dataframe['tag']).drop(columns=['tag','dimh','qtrs', 'iprx', 'adsh', 'ddate'])
     balance_dataframe = balance_dataframe.rename(columns={'value': cur_date}) # rename the value column to the date 
     return balance_dataframe
-
-
-
 
 # pandas old alternative to sql
 def parse_10Q(company_submissions, file_name):

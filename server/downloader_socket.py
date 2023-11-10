@@ -9,22 +9,26 @@ import time
 
 
 """
-class props:
-    status = False
 
-def ack(value):
+# class varibles
+class props:
+    stop_download = False
+
+# recives reponse from frontend
+def client_message(value):
+    # change varible if front end says to stop
     if value == 'ok':
-        props.status = False
+        props.stop_download = False
         return 
     elif value == 'stop':
-        props.status = True
+        props.stop_download = True
         return 
 
 def download_update_clean_files(socketio):
     props.status = False
     error_filenames = download_update(socketio)
 
-    if props.status == True:
+    if props.stop_download == True:
         return
     
     cleaner(socketio, error_filenames)
@@ -45,7 +49,7 @@ def download_update(socketio):
         
         file_name = f'{yr}q{qr}_notes' # create file to store downloaded data
 
-        if props.status == True:
+        if props.stop_download == True:
             return error_filenames
 
         socketio.emit('message_from_server', {"data": f"Downloadling{file_name}"}, callback=ack)
@@ -71,7 +75,7 @@ def download_update(socketio):
         
         file_name = f'{yr}_{month}_notes'
 
-        if props.status == False:
+        if props.stop_download == False:
             return error_filenames
 
         socketio.emit('message_from_server', {"data": f"Downloadling{file_name}"}, callback=ack)     
@@ -86,13 +90,15 @@ def download_update(socketio):
                 with ZipFile(BytesIO(zipresp.read())) as zfile:
                     zfile.extractall(rf'./data_code/{file_name}')
         except:
+            # record files
             error_filenames.append(file_name)
     return error_filenames
 
 
 def cleaner(socketio, error_filenames):
     from sqlalchemy import create_engine
-
+    
+    # wait a moment so frontend can update status
     emit_wait_time = 0.01
 
     engine = create_engine('sqlite:///mydb.db', echo=False)
@@ -112,14 +118,15 @@ def cleaner(socketio, error_filenames):
     'iprx': 'Int32'}
     # open each num tsv fiie, the file stores each xbrl value for the sec document
     for file_name in files:
-        # send update on editing to websocket
+    
+        # tell client what the backend is currently working on
+        socketio.emit('message_from_server', {"data": f"Editing {file_name}"}, callback=client_message)    
 
-        if props.status == False:
+        # stop the program if message received from client
+        if props.stop_download == False:
             return 
 
-        socketio.emit('message_from_server', {"data": f"Editing {file_name}"}, callback=ack)    
-
-        # check if files has already been create and skip if so
+        # check if files have already been created and skip if so
         data_files = os.listdir(f"./data_code/{file_name}")
         if "reduced_num.parquet" in data_files or file_name in error_filenames:
             time.sleep(emit_wait_time)
