@@ -2,8 +2,9 @@ import pandas as pd
 import os 
 from io import BytesIO
 from zipfile import ZipFile
-from urllib.request import urlopen
+from urllib.request import urlopen, Request
 from datetime import date
+from dateutil.relativedelta import relativedelta
 import time
 """
 
@@ -25,17 +26,17 @@ def client_message(value):
         return 
 
 def download_update_clean_files(socketio):
-    props.status = False
+    props.stop_download = False
     error_filenames = download_update(socketio)
 
     if props.stop_download == True:
         return
-    
+    print("sdfsdf")
     cleaner(socketio, error_filenames)
     return 
 
 def download_update(socketio):
-    emit_wait_time = 1
+    emit_wait_time = 0.1
 
     # dates for each release quarterly
     files = os.listdir('./data_code/')
@@ -52,7 +53,7 @@ def download_update(socketio):
         if props.stop_download == True:
             return error_filenames
 
-        socketio.emit('message_from_server', {"data": f"Downloadling{file_name}"}, callback=ack)
+        socketio.emit('message_from_server', {"data": f"Downloadling{file_name}"}, callback=client_message)
 
         if file_name in files:
             time.sleep(emit_wait_time)
@@ -63,7 +64,7 @@ def download_update(socketio):
             with ZipFile(BytesIO(zipresp.read())) as zfile:
                 zfile.extractall(rf'./data_code/{file_name}')
                 
-    current_date =  str(date.today())
+    current_date =  str(date.today() - relativedelta(months=1)) 
 
     # dates for each release monthly
     filing_periods = [(d.year, d.month) for d in pd.date_range('2021-1-31', current_date, freq='M')]
@@ -74,23 +75,29 @@ def download_update(socketio):
         sec_url = f'{sec_url}/{yr}_{month}_notes.zip' # create download url 
         
         file_name = f'{yr}_{month}_notes'
-
-        if props.stop_download == False:
+        
+        if props.stop_download == True:
             return error_filenames
 
-        socketio.emit('message_from_server', {"data": f"Downloadling{file_name}"}, callback=ack)     
+        socketio.emit('message_from_server', {"data": f"Downloadling{file_name}"}, callback=client_message)     
         
+        # skip if file already present with wait
         if file_name in files:
             time.sleep(emit_wait_time)
             continue    
 
         # download zip file and extract it 
         try:
-            with urlopen(sec_url) as zipresp:
+            req = Request(
+                        url=sec_url, 
+                        headers={'User-Agent': 'MyApp/1.0'}
+                    )
+            with urlopen(req) as zipresp:
                 with ZipFile(BytesIO(zipresp.read())) as zfile:
                     zfile.extractall(rf'./data_code/{file_name}')
         except:
             # record files
+            print(sec_url)
             error_filenames.append(file_name)
     return error_filenames
 
@@ -99,10 +106,9 @@ def cleaner(socketio, error_filenames):
     from sqlalchemy import create_engine
     
     # wait a moment so frontend can update status
-    emit_wait_time = 0.01
+    emit_wait_time = 0.1
 
     engine = create_engine('sqlite:///mydb.db', echo=False)
-    
     # read in files and change to descending order, earliest date first
     files = os.listdir('./data_code/')
     files.reverse()
@@ -123,9 +129,9 @@ def cleaner(socketio, error_filenames):
         socketio.emit('message_from_server', {"data": f"Editing {file_name}"}, callback=client_message)    
 
         # stop the program if message received from client
-        if props.stop_download == False:
+        if props.stop_download == True:
             return 
-
+        
         # check if files have already been created and skip if so
         data_files = os.listdir(f"./data_code/{file_name}")
         if "reduced_num.parquet" in data_files or file_name in error_filenames:
@@ -142,9 +148,13 @@ def cleaner(socketio, error_filenames):
         # convert csv to quicker parquet file
         reduced_df_num.to_parquet(f'./data_code/{file_name}/reduced_num.parquet', compression="snappy")
         
+        metric_count_values = pd.DataFrame(reduced_df_num['tag'].value_counts())
+
+        # save metric_count_values as parquet
+        metric_count_values.to_parquet(f'./data_code/{file_name}/metric_count_values_{file_name}.parquet', compression="snappy")
+
         # add tables to sql server with 
         reduced_df_num.to_sql(file_name, engine)
     # close engine 
     engine.dispose()
     return 
-

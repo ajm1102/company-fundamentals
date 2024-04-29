@@ -2,17 +2,17 @@ import pandas as pd
 import sqlite3
 
 # get 10Q dataframes 
-def parse_10Q_sql(company_submissions, file_name):
+def parse_10Q_sql(company_submissions, file_name, metric_count_table):
 
     cur_date = int(company_submissions['period'].values[0])
-    
+
     # connect to database
     conn = sqlite3.connect('mydb.db')
     cur = conn.cursor()
     
     # adsh values map to metric values
     adsh_values = tuple(company_submissions['adsh'].tolist())
-    
+
     # use query to extract relevant
     metric_values_df = cur.execute(f"SELECT * FROM '{file_name}' WHERE adsh=?", adsh_values)
     column_names = [description[0] for description in metric_values_df.description]
@@ -21,26 +21,37 @@ def parse_10Q_sql(company_submissions, file_name):
     metric_values_df = metric_values_df.fetchall()
     metric_values_df = pd.DataFrame(metric_values_df)
     metric_values_df.columns = column_names
-
+    metric_values_df = metric_values_df[metric_values_df['tag'].isin(list(metric_count_table.index))]
     
     income_df = income_extraction_10Q(metric_values_df, cur_date)
     balance_df = balance_extraction_10Q(metric_values_df, cur_date)
+
     return income_df, balance_df
 
 
-def parse_10K_sql(company_submissions, file_name):
+def parse_10K_sql(company_submissions, file_name, metric_count_table):
+
     cur_date = int(company_submissions['period'].values[0])
+
+    # connect to database
     conn = sqlite3.connect('mydb.db')
     cur = conn.cursor()
+
+    # adsh values map to metric values
     adsh_values = tuple(company_submissions['adsh'].tolist())
-    x = cur.execute(f"SELECT * FROM '{file_name}' WHERE adsh=?", adsh_values)
-    column_names = [description[0] for description in x.description]
+
+    # use query to extract relevant
+    metric_values_df = cur.execute(f"SELECT * FROM '{file_name}' WHERE adsh=?", adsh_values)
+    column_names = [description[0] for description in metric_values_df.description]
     
-    x = x.fetchall()
-    x = pd.DataFrame(x)
-    x.columns = column_names
-    income_df = income_extraction_10K(x, cur_date)
-    balance_df = balance_extraction_10K(x, cur_date)
+    # convert to dataframe and add column names
+    metric_values_df = metric_values_df.fetchall()
+    metric_values_df = pd.DataFrame(metric_values_df)
+    metric_values_df.columns = column_names
+    metric_values_df = metric_values_df[metric_values_df['tag'].isin(list(metric_count_table.index))]
+
+    income_df = income_extraction_10K(metric_values_df, cur_date)
+    balance_df = balance_extraction_10K(metric_values_df, cur_date)
 
     income_df = income_df.drop('index', axis=1)
     balance_df = balance_df.drop('index', axis=1)
@@ -100,6 +111,7 @@ def parse_10Q(company_submissions, file_name):
     balance_df = balance_extraction_10Q(val, cur_date)
 
     return income_df, balance_df
+
 def parse_10K(company_submissions, file_name):
     cur_date = int(company_submissions['period'].values[0])
 

@@ -5,10 +5,11 @@ widly used and known. Function provides a way to map a ticker to CIK.
 """
 def convert_ticker_cik(ticker):
     import requests
-    
+
     # get list of currently used tickers
     ticker = ticker.upper()
-    r = requests.get('https://www.sec.gov/files/company_tickers.json')
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36'}
+    r = requests.get('https://www.sec.gov/files/company_tickers.json', headers=headers)
     map_ticker_to_cik = r.json() # 
     
     # use the obtatied dictionary to convert from key to value

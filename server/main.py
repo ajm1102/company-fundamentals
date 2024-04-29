@@ -22,36 +22,49 @@ def return_metrics(ticker):
         # load table that stores identifier to reports
         path_submissions = f'./data_code/{file_name}/sub.tsv'
         df_submissions = pd.read_table(path_submissions)
-        
+
+        depth = 1000
+
+        # metric count
+        metric_count_path = f'./data_code/2024_02_notes/metric_count_values_2024_02_notes.parquet'
+        metric_count_table = pd.read_parquet(metric_count_path)[0:depth]
+
         # reduce to quarterly statements
         df_submissions_quarterly_reports = df_submissions[(df_submissions['form'] == '10-Q') | 
                                                           (df_submissions['form'] == '10-K')]
         # extract for the given company
         company_submissions = df_submissions_quarterly_reports[df_submissions_quarterly_reports['cik'] == company_cik]
-        
+
         # check if comapany released a 10-Q statement in month/quarter
         if not company_submissions.empty and company_submissions['form'].values[0] == '10-Q':
 
             # using sql query the database for each submissions convert adsh to metrics
-            income_statement, balance_statement = parse_10Q_sql(company_submissions, file_name)
+            
+            income_statement, balance_statement = parse_10Q_sql(company_submissions, file_name, metric_count_table)
+            
+            income_statement = income_statement.drop(['index'], axis=1, errors='ignore')
+            balance_statement = balance_statement.drop(['index'], axis=1, errors='ignore')
             
             # add income to list for this time period
             income_statements.append(income_statement)
             balance_statements.append(balance_statement)
-
+            
         # check if comapany released a 10-K statement in month/quarter
         if not company_submissions.empty and company_submissions['form'].values[0] == '10-K':
             # using sql query the database for each submissions convert adsh to metrics
-            income_statement, balance_statement = parse_10K_sql(company_submissions, file_name)
-            
+            income_statement, balance_statement = parse_10K_sql(company_submissions, file_name, metric_count_table)
+
+            income_statement = income_statement.drop(['index'], axis=1, errors='ignore')
+            balance_statement = balance_statement.drop(['index'], axis=1, errors='ignore')
+
             # add income to list for this time period
             income_statements.append(income_statement)
             balance_statements.append(balance_statement)       
-
+    
     # join the lists of dataframes  
     balance_statements_rough = pd.DataFrame().join(balance_statements, how="outer")
     income_statements_rough = pd.DataFrame().join(income_statements, how="outer")
-
+    
     # list all xbrl metrics such as assets for this stock
     available_metrics = list(balance_statements_rough.index) + list(income_statements_rough.index)
     
