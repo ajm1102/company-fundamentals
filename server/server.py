@@ -41,6 +41,7 @@ def metric_history():
     # extract 
     args = request.args
     metric = args['metric']
+    print(metric)
 
     # extract dataframes from session
     income_statement = pd.DataFrame(session['income'])

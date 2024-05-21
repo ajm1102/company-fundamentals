@@ -1,26 +1,16 @@
 import pandas as pd
-import sqlite3
 
 # get 10Q dataframes 
-def parse_10Q_sql(company_submissions, file_name, metric_count_table):
-
+def parse_10Q_sql(company_submissions, file_name, metric_count_table, conn):
     cur_date = int(company_submissions['period'].values[0])
 
-    # connect to database
-    conn = sqlite3.connect('mydb.db')
-    cur = conn.cursor()
-    
-    # adsh values map to metric values
-    adsh_values = tuple(company_submissions['adsh'].tolist())
 
+    # adsh values map to metric values
+    adsh_value = company_submissions['adsh'].tolist()[0]
     # use query to extract relevant
-    metric_values_df = cur.execute(f"SELECT * FROM '{file_name}' WHERE adsh=?", adsh_values)
-    column_names = [description[0] for description in metric_values_df.description]
-    
-    # convert to dataframe and add column names
-    metric_values_df = metric_values_df.fetchall()
-    metric_values_df = pd.DataFrame(metric_values_df)
-    metric_values_df.columns = column_names
+    query = f"SELECT * FROM '{file_name}' WHERE adsh = ?"
+    metric_values_df = pd.read_sql_query(query, conn, params=(adsh_value,))
+
     metric_values_df = metric_values_df[metric_values_df['tag'].isin(list(metric_count_table.index))]
     
     income_df = income_extraction_10Q(metric_values_df, cur_date)
@@ -29,25 +19,16 @@ def parse_10Q_sql(company_submissions, file_name, metric_count_table):
     return income_df, balance_df
 
 
-def parse_10K_sql(company_submissions, file_name, metric_count_table):
+def parse_10K_sql(company_submissions, file_name, metric_count_table, conn):
 
     cur_date = int(company_submissions['period'].values[0])
 
-    # connect to database
-    conn = sqlite3.connect('mydb.db')
-    cur = conn.cursor()
-
     # adsh values map to metric values
-    adsh_values = tuple(company_submissions['adsh'].tolist())
-
+    adsh_value = company_submissions['adsh'].tolist()[0]
     # use query to extract relevant
-    metric_values_df = cur.execute(f"SELECT * FROM '{file_name}' WHERE adsh=?", adsh_values)
-    column_names = [description[0] for description in metric_values_df.description]
-    
-    # convert to dataframe and add column names
-    metric_values_df = metric_values_df.fetchall()
-    metric_values_df = pd.DataFrame(metric_values_df)
-    metric_values_df.columns = column_names
+    query = f"SELECT * FROM '{file_name}' WHERE adsh = ?"
+    metric_values_df = pd.read_sql_query(query, conn, params=(adsh_value,))
+
     metric_values_df = metric_values_df[metric_values_df['tag'].isin(list(metric_count_table.index))]
 
     income_df = income_extraction_10K(metric_values_df, cur_date)
